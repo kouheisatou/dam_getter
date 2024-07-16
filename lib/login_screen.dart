@@ -66,14 +66,7 @@ document.getElementById('LoginButton').click();
               },
               onLoadStop: (controller, url) {
                 if (url.toString() == DAM_LOGIN_SUCCEEDED_PAGE) {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) {
-                        return HistoryScreen();
-                      },
-                    ),
-                  );
+                  Navigator.pop(context);
                 }
               },
             ),

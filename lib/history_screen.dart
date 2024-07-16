@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:dam_getter/login_screen.dart';
 import 'package:dam_getter/values.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -117,6 +118,20 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36',
                 preferredContentMode: UserPreferredContentMode.DESKTOP,
               ),
+              onLoadStop: (controller, url) async {
+                if(url.toString() != DAM_MYPAGE_URL){
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) {
+                        return LoginScreen();
+                      },
+                      fullscreenDialog: true,
+                    ),
+                  );
+                  await webView?.loadUrl(urlRequest: URLRequest(url: WebUri(DAM_MYPAGE_URL)));
+                }
+              },
             ),
           )
         ],
