@@ -10,12 +10,15 @@ import 'package:xml/xml.dart' as xml;
 class HistoryScreen extends StatefulWidget {
   @override
   State<HistoryScreen> createState() => _HistoryScreenState();
+
+  String selectedScoreType = SCORE_TYPES.keys.first;
+  bool downloading = false;
 }
 
 class _HistoryScreenState extends State<HistoryScreen> {
   InAppWebViewController? webView;
 
-  Future<String> fetchScores(String scoreType) async {
+  Future<String> fetchScoring(String baseURL) async {
     String? cdmToken = await webView?.evaluateJavascript(source: "DamHistoryManager.getCdmToken()");
     String? cdmCardNo = await webView?.evaluateJavascript(source: "DamHistoryManager.getCdmCardNo()");
 
@@ -23,16 +26,27 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
     var hasNext = true;
     var pageNo = 1;
+    List<String> dumpedResults = [];
     while (hasNext) {
-      var url = "https://www.clubdam.com/app/damtomo/scoring/$scoreType.do?cdmCardNo=$cdmCardNo&cdmToken=$cdmToken&enc=sjis&pageNo=$pageNo&detailFlg=1&dxgType=1&UTCserial=${DateTime.now().millisecondsSinceEpoch}";
+      var url = baseURL.replaceAll("\${cdmCardNo}", cdmCardNo).replaceAll("\${cdmToken}", cdmToken).replaceAll("\${UTCserial}", DateTime.now().millisecondsSinceEpoch.toString()).replaceAll("\${pageNo}", pageNo.toString());
+      print(url);
       var resp = await http.get(Uri.parse(url), headers: {'Content-Type': 'application/xml'});
-      hasNext = xml.XmlDocument.parse(resp.body).findAllElements('page').first.getAttribute('hasNext') == "1";
+      var xmlDocument = xml.XmlDocument.parse(resp.body);
+      hasNext = xmlDocument.findAllElements('page').first.getAttribute('hasNext') == "1";
       pageNo++;
-      sleep(const Duration(seconds: 3));
-      print(resp.body);
+      sleep(const Duration(seconds: 1));
+
+      for (var score in xmlDocument.findAllElements("scoring")) {
+        dumpedResults.add(score.toString());
+      }
     }
 
-    return "";
+    var resultXmlString = '<document xmlns="https://www.clubdam.com/${Uri.parse(baseURL).path}" type="2.2"><list count="${dumpedResults.length}">';
+    for (var dumpedResult in dumpedResults) {
+      resultXmlString += dumpedResult;
+    }
+    resultXmlString += "</list></document>";
+    return resultXmlString;
   }
 
   @override
@@ -43,11 +57,38 @@ class _HistoryScreenState extends State<HistoryScreen> {
           Padding(
             padding: const EdgeInsets.all(80.0),
             child: IconButton(
-              onPressed: () async {
-                await fetchScores("GetScoringAiListXML");
-              },
-              icon: const Icon(Icons.download),
+              onPressed: widget.downloading
+                  ? null
+                  : () async {
+                      if (SCORE_TYPES[widget.selectedScoreType] != null) {
+                        setState(() {
+                          widget.downloading = true;
+                        });
+                        var result = await fetchScoring(SCORE_TYPES[widget.selectedScoreType]!);
+                        print(result);
+                        setState(() {
+                          widget.downloading = false;
+                        });
+                      }
+                    },
+              icon: widget.downloading ? const CircularProgressIndicator() : const Icon(Icons.download),
             ),
+          ),
+          DropdownButton<String>(
+            value: widget.selectedScoreType,
+            onChanged: (String? newValue) {
+              setState(() {
+                if (newValue != null) {
+                  widget.selectedScoreType = newValue;
+                }
+              });
+            },
+            items: SCORE_TYPES.keys.map<DropdownMenuItem<String>>((String value) {
+              return DropdownMenuItem<String>(
+                value: value,
+                child: Text(value),
+              );
+            }).toList(),
           ),
           Expanded(
             child: InAppWebView(

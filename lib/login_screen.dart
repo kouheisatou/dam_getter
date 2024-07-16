@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:dam_getter/history_screen.dart';
-import 'package:dam_getter/secret.dart';
+import 'package:dam_getter/values_secret.dart';
 import 'package:dam_getter/values.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
