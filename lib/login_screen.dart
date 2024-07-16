@@ -22,8 +22,11 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> login(String user, String pass) async {
     // await webView?.loadUrl(urlRequest: URLRequest(url: WebUri(DAM_MYPAGE_URL)));
     // CookieManager.instance().deleteAllCookies();
-    await webView?.evaluateJavascript(source: "document.getElementById('LoginID').value = '$user'; document.getElementById('LoginPassword').value = '$pass';");
-    await webView?.evaluateJavascript(source: "document.getElementById('LoginButton').click();");
+    await webView?.evaluateJavascript(source: """
+document.getElementById('LoginID').value = '$user';
+document.getElementById('LoginPassword').value = '$pass';
+document.getElementById('LoginButton').click();
+    """);
   }
 
   @override
@@ -46,11 +49,14 @@ class _LoginScreenState extends State<LoginScreen> {
               widget.password = value;
             },
           ),
-          FloatingActionButton(
-            onPressed: () async {
-              await login(widget.username, widget.password);
-            },
-            child: const Text("login"),
+          Padding(
+            padding: const EdgeInsets.all(80.0),
+            child: IconButton(
+              onPressed: () async {
+                await login(widget.username, widget.password);
+              },
+              icon: const Icon(Icons.login),
+            ),
           ),
           Expanded(
             child: InAppWebView(
@@ -59,10 +65,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 webView = controller;
               },
               onLoadStop: (controller, url) {
-                print(url);
-                print(DAM_LOGIN_SUCCEEDED_PAGE);
-                if (url.toString() == DAM_LOGIN_SUCCEEDED_PAGE || url.toString() == DAM_MYPAGE_URL) {
-                  webView?.loadUrl(urlRequest: URLRequest(url: WebUri(DAM_MYPAGE_URL)));
+                if (url.toString() == DAM_LOGIN_SUCCEEDED_PAGE) {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
