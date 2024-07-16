@@ -5,6 +5,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import "package:http/http.dart" as http;
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:xml/xml.dart' as xml;
 
 class HistoryScreen extends StatefulWidget {
@@ -39,6 +41,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
       for (var score in xmlDocument.findAllElements("scoring")) {
         dumpedResults.add(score.toString());
       }
+      break;
     }
 
     var resultXmlString = '<document xmlns="https://www.clubdam.com/${Uri.parse(baseURL).path}" type="2.2"><list count="${dumpedResults.length}">';
@@ -64,11 +67,25 @@ class _HistoryScreenState extends State<HistoryScreen> {
                         setState(() {
                           widget.downloading = true;
                         });
-                        var result = await fetchScoring(SCORE_TYPES[widget.selectedScoreType]!);
-                        print(result);
-                        setState(() {
-                          widget.downloading = false;
-                        });
+                        try {
+                          var result = await fetchScoring(SCORE_TYPES[widget.selectedScoreType]!);
+                          print(result);
+
+                          final directory = await getApplicationDocumentsDirectory();
+                          var filePath = "${directory.path}/${DateTime.now().millisecondsSinceEpoch}.xml";
+                          var file = File(filePath);
+                          await file.writeAsString(result);
+
+                          Share.shareXFiles(
+                            [XFile(filePath)],
+                            subject: "ExportedScombMobileDB.json",
+                            sharePositionOrigin: const Rect.fromLTWH(0, 0, 300, 300),
+                          );
+                        } finally {
+                          setState(() {
+                            widget.downloading = false;
+                          });
+                        }
                       }
                     },
               icon: widget.downloading ? const CircularProgressIndicator() : const Icon(Icons.download),
