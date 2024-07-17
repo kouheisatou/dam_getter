@@ -119,13 +119,14 @@ class _HistoryScreenState extends State<HistoryScreen> {
                                   print(result);
 
                                   final directory = await getApplicationDocumentsDirectory();
-                                  var filePath = "${directory.path}/${DateTime.now().millisecondsSinceEpoch}.xml";
+                                  var fileName = "${widget.selectedScoreType}.xml";
+                                  var filePath = "${directory.path}/$fileName";
                                   var file = File(filePath);
                                   await file.writeAsString(result);
 
                                   Share.shareXFiles(
                                     [XFile(filePath)],
-                                    subject: "ExportedScombMobileDB.json",
+                                    subject: fileName,
                                     sharePositionOrigin: const Rect.fromLTWH(0, 0, 300, 300),
                                   );
                                 } finally {
