@@ -16,6 +16,7 @@ class HistoryScreen extends StatefulWidget {
 
   String selectedScoreType = SCORE_TYPES.keys.first;
   bool downloading = false;
+  double progress = 0.0;
 }
 
 class _HistoryScreenState extends State<HistoryScreen> {
@@ -36,6 +37,9 @@ class _HistoryScreenState extends State<HistoryScreen> {
       var resp = await http.get(Uri.parse(url), headers: {'Content-Type': 'application/xml'});
       var xmlDocument = xml.XmlDocument.parse(resp.body);
       hasNext = xmlDocument.findAllElements('page').first.getAttribute('hasNext') == "1";
+      setState(() {
+        widget.progress = pageNo.toDouble() / double.parse(xmlDocument.findAllElements('page').first.getAttribute('pageCount').toString());
+      });
       pageNo++;
       for (var data in xmlDocument.findAllElements("data")) {
         dumpedResults.add(data.toString());
@@ -88,21 +92,35 @@ class _HistoryScreenState extends State<HistoryScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  DropdownButton<String>(
-                    value: widget.selectedScoreType,
-                    onChanged: (String? newValue) {
-                      setState(() {
-                        if (newValue != null) {
-                          widget.selectedScoreType = newValue;
-                        }
-                      });
-                    },
-                    items: SCORE_TYPES.keys.map<DropdownMenuItem<String>>((String value) {
-                      return DropdownMenuItem<String>(
-                        value: value,
-                        child: Text(value),
-                      );
-                    }).toList(),
+                  Stack(
+                    alignment: Alignment.bottomCenter,
+                    children: [
+                      DropdownButton<String>(
+                        underline: SizedBox(
+                          height: 0.5,
+                          child: Visibility(
+                            visible: widget.downloading,
+                            child: LinearProgressIndicator(
+                              value: widget.progress,
+                            ),
+                          ),
+                        ),
+                        value: widget.selectedScoreType,
+                        onChanged: (String? newValue) {
+                          setState(() {
+                            if (newValue != null) {
+                              widget.selectedScoreType = newValue;
+                            }
+                          });
+                        },
+                        items: SCORE_TYPES.keys.map<DropdownMenuItem<String>>((String value) {
+                          return DropdownMenuItem<String>(
+                            value: value,
+                            child: Text(value),
+                          );
+                        }).toList(),
+                      ),
+                    ],
                   ),
                   Padding(
                     padding: const EdgeInsets.all(80.0),
