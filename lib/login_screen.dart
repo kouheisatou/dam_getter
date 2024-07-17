@@ -20,8 +20,6 @@ class _LoginScreenState extends State<LoginScreen> {
   InAppWebViewController? webView;
 
   Future<void> login(String user, String pass) async {
-    // await webView?.loadUrl(urlRequest: URLRequest(url: WebUri(DAM_MYPAGE_URL)));
-    // CookieManager.instance().deleteAllCookies();
     await webView?.evaluateJavascript(source: """
 document.getElementById('LoginID').value = '$user';
 document.getElementById('LoginPassword').value = '$pass';
@@ -32,33 +30,9 @@ document.getElementById('LoginButton').click();
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Login"),
-      ),
-      body: Column(
+      body: Stack(
         children: [
-          TextFormField(
-            initialValue: widget.username,
-            onChanged: (value) {
-              widget.username = value;
-            },
-          ),
-          TextFormField(
-            initialValue: widget.password,
-            onChanged: (value) {
-              widget.password = value;
-            },
-          ),
-          Padding(
-            padding: const EdgeInsets.all(80.0),
-            child: IconButton(
-              onPressed: () async {
-                await login(widget.username, widget.password);
-              },
-              icon: const Icon(Icons.login),
-            ),
-          ),
-          Expanded(
+          Positioned.fill(
             child: InAppWebView(
               initialUrlRequest: URLRequest(url: WebUri(DAM_MYPAGE_URL)),
               onWebViewCreated: (InAppWebViewController controller) {
@@ -70,7 +44,59 @@ document.getElementById('LoginButton').click();
                 }
               },
             ),
-          )
+          ),
+          Positioned.fill(
+            child: Container(
+              color: Theme.of(context).colorScheme.surface,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(20.0),
+                    child: TextFormField(
+                      initialValue: widget.username,
+                      textAlign: TextAlign.center,
+                      decoration: const InputDecoration(
+                        isCollapsed: true,
+                        contentPadding: EdgeInsets.zero,
+                        border: InputBorder.none,
+                        hintText: "D A M - I D",
+                      ),
+                      onChanged: (value) {
+                        widget.username = value;
+                      },
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(20.0),
+                    child: TextFormField(
+                      initialValue: widget.password,
+                      textAlign: TextAlign.center,
+                      obscureText: true,
+                      decoration: const InputDecoration(
+                        isCollapsed: true,
+                        contentPadding: EdgeInsets.zero,
+                        border: InputBorder.none,
+                        hintText: "P A S S W O R D",
+                      ),
+                      onChanged: (value) {
+                        widget.password = value;
+                      },
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(0, 50, 0, 100),
+                    child: IconButton(
+                      onPressed: () async {
+                        await login(widget.username, widget.password);
+                      },
+                      icon: const Icon(Icons.login),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );

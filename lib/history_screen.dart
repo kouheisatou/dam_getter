@@ -37,12 +37,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
       var xmlDocument = xml.XmlDocument.parse(resp.body);
       hasNext = xmlDocument.findAllElements('page').first.getAttribute('hasNext') == "1";
       pageNo++;
-      sleep(const Duration(seconds: 1));
-
-      for (var score in xmlDocument.findAllElements("scoring")) {
-        dumpedResults.add(score.toString());
+      for (var data in xmlDocument.findAllElements("data")) {
+        dumpedResults.add(data.toString());
       }
-      break;
+      await Future.delayed(const Duration(seconds: 1));
     }
 
     var resultXmlString = '<document xmlns="https://www.clubdam.com/${Uri.parse(baseURL).path}" type="2.2"><list count="${dumpedResults.length}">';
@@ -56,59 +54,9 @@ class _HistoryScreenState extends State<HistoryScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Column(
+      body: Stack(
         children: [
-          Padding(
-            padding: const EdgeInsets.all(80.0),
-            child: IconButton(
-              onPressed: widget.downloading
-                  ? null
-                  : () async {
-                      if (SCORE_TYPES[widget.selectedScoreType] != null) {
-                        setState(() {
-                          widget.downloading = true;
-                        });
-                        try {
-                          var result = await fetchScoring(SCORE_TYPES[widget.selectedScoreType]!);
-                          print(result);
-
-                          final directory = await getApplicationDocumentsDirectory();
-                          var filePath = "${directory.path}/${DateTime.now().millisecondsSinceEpoch}.xml";
-                          var file = File(filePath);
-                          await file.writeAsString(result);
-
-                          Share.shareXFiles(
-                            [XFile(filePath)],
-                            subject: "ExportedScombMobileDB.json",
-                            sharePositionOrigin: const Rect.fromLTWH(0, 0, 300, 300),
-                          );
-                        } finally {
-                          setState(() {
-                            widget.downloading = false;
-                          });
-                        }
-                      }
-                    },
-              icon: widget.downloading ? const CircularProgressIndicator() : const Icon(Icons.download),
-            ),
-          ),
-          DropdownButton<String>(
-            value: widget.selectedScoreType,
-            onChanged: (String? newValue) {
-              setState(() {
-                if (newValue != null) {
-                  widget.selectedScoreType = newValue;
-                }
-              });
-            },
-            items: SCORE_TYPES.keys.map<DropdownMenuItem<String>>((String value) {
-              return DropdownMenuItem<String>(
-                value: value,
-                child: Text(value),
-              );
-            }).toList(),
-          ),
-          Expanded(
+          Positioned.fill(
             child: InAppWebView(
               onWebViewCreated: (controller) {
                 webView = controller;
@@ -119,7 +67,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 preferredContentMode: UserPreferredContentMode.DESKTOP,
               ),
               onLoadStop: (controller, url) async {
-                if(url.toString() != DAM_MYPAGE_URL){
+                if (url.toString() != DAM_MYPAGE_URL) {
                   await Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -133,7 +81,67 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 }
               },
             ),
-          )
+          ),
+          Positioned.fill(
+            child: Container(
+              color: Theme.of(context).colorScheme.surface,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  DropdownButton<String>(
+                    value: widget.selectedScoreType,
+                    onChanged: (String? newValue) {
+                      setState(() {
+                        if (newValue != null) {
+                          widget.selectedScoreType = newValue;
+                        }
+                      });
+                    },
+                    items: SCORE_TYPES.keys.map<DropdownMenuItem<String>>((String value) {
+                      return DropdownMenuItem<String>(
+                        value: value,
+                        child: Text(value),
+                      );
+                    }).toList(),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(80.0),
+                    child: IconButton(
+                      onPressed: widget.downloading
+                          ? null
+                          : () async {
+                              if (SCORE_TYPES[widget.selectedScoreType] != null) {
+                                setState(() {
+                                  widget.downloading = true;
+                                });
+                                try {
+                                  var result = await fetchScoring(SCORE_TYPES[widget.selectedScoreType]!);
+                                  print(result);
+
+                                  final directory = await getApplicationDocumentsDirectory();
+                                  var filePath = "${directory.path}/${DateTime.now().millisecondsSinceEpoch}.xml";
+                                  var file = File(filePath);
+                                  await file.writeAsString(result);
+
+                                  Share.shareXFiles(
+                                    [XFile(filePath)],
+                                    subject: "ExportedScombMobileDB.json",
+                                    sharePositionOrigin: const Rect.fromLTWH(0, 0, 300, 300),
+                                  );
+                                } finally {
+                                  setState(() {
+                                    widget.downloading = false;
+                                  });
+                                }
+                              }
+                            },
+                      icon: widget.downloading ? const CircularProgressIndicator() : const Icon(Icons.download),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );
