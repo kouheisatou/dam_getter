@@ -1,0 +1,2 @@
+String? cdmToken;
+String? cdmCardNo;

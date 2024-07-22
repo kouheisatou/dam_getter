@@ -1,6 +1,8 @@
-import 'package:dam_getter/values.dart';
+import 'package:dam_getter/values_public.dart';
+import 'package:dam_getter/values_static.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -54,11 +56,26 @@ document.getElementById('LoginButton').click();
                 onWebViewCreated: (InAppWebViewController controller) {
                   webView = controller;
                 },
-                onLoadStop: (controller, url) {
-                  if (url.toString() == DAM_LOGIN_SUCCEEDED_PAGE) {
-                    Navigator.pop(context);
+                onLoadStop: (controller, url) async {
+                  if (url.toString() == DAM_MYPAGE_URL) {
+                    cdmToken = await webView?.evaluateJavascript(source: "DamHistoryManager.getCdmToken()");
+                    cdmCardNo = await webView?.evaluateJavascript(source: "DamHistoryManager.getCdmCardNo()");
+
+                    if (cdmToken == null || cdmCardNo == null) {
+                      Fluttertoast.showToast(msg: "ログインエラー");
+                    } else {
+                      final prefs = await SharedPreferences.getInstance();
+                      await prefs.setString("cdm_token", cdmToken!);
+                      await prefs.setString("cdm_card_no", cdmCardNo!);
+
+                      Navigator.pop(context);
+                    }
                   }
                 },
+                initialSettings: InAppWebViewSettings(
+                  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36',
+                  preferredContentMode: UserPreferredContentMode.DESKTOP,
+                ),
               ),
             ),
             Positioned.fill(
