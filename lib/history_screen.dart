@@ -87,12 +87,17 @@ class _HistoryScreenState extends State<HistoryScreen> {
           });
           pageNo++;
           for (var scoringXml in xmlDocument.findAllElements("scoring")) {
-            await insertToList(ScoreDataModel.fromXml(scoringXml, scoreType.key));
+            var score = ScoreDataModel.fromXml(scoringXml, scoreType.key);
+            if (_list.contains(score)) {
+              widget.screenState = ScreenState.downloaded;
+              return;
+            }
+            await insertToList(score);
           }
           await Future.delayed(const Duration(seconds: 1));
           if (widget.screenState == ScreenState.cancelling) {
             widget.screenState = ScreenState.initialized;
-            break;
+            return;
           }
         }
       }
@@ -149,24 +154,26 @@ class _HistoryScreenState extends State<HistoryScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: AnimatedList(
-        itemBuilder: (BuildContext context, int index, Animation<double> animation) {
-          var score = _list[index];
-          return SizeTransition(
-            sizeFactor: animation,
-            child: Card(
-              child: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: ListTile(
-                  title: Text(score.contentsName),
-                  subtitle: Text(score.scoringTime.toString()),
-                  trailing: Text(score.score.toString()),
+      body: Scrollbar(
+        child: AnimatedList(
+          itemBuilder: (BuildContext context, int index, Animation<double> animation) {
+            var score = _list[index];
+            return SizeTransition(
+              sizeFactor: animation,
+              child: Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: ListTile(
+                    title: Text(score.contentsName),
+                    subtitle: Text(score.scoringTime.toString()),
+                    trailing: Text(score.score.toString()),
+                  ),
                 ),
               ),
-            ),
-          );
-        },
-        key: _list.listKey,
+            );
+          },
+          key: _list.listKey,
+        ),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
@@ -195,10 +202,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
       case ScreenState.initialized:
         return const Icon(Icons.download);
       case ScreenState.downloading:
-        return Stack(
+        return const Stack(
           children: [
-            Positioned.fill(child: Padding(padding: const EdgeInsets.all(8.0), child: CircularProgressIndicator(value: widget.progress))),
-            const Positioned.fill(child: Icon(Icons.downloading)),
+            Positioned.fill(child: Padding(padding: EdgeInsets.all(8.0), child: CircularProgressIndicator())),
+            Positioned.fill(child: Icon(Icons.downloading)),
           ],
         );
       case ScreenState.downloaded:
