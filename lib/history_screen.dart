@@ -87,16 +87,13 @@ class _HistoryScreenState extends State<HistoryScreen> {
           });
           pageNo++;
           for (var scoringXml in xmlDocument.findAllElements("scoring")) {
-            var score = ScoreDataModel.fromXml(scoringXml, scoreType.key);
-            if (_list.contains(score)) {
-              widget.screenState = ScreenState.downloaded;
-              return;
-            }
-            await insertToList(score);
+            await insertToList(ScoreDataModel.fromXml(scoringXml, scoreType.key));
           }
           await Future.delayed(const Duration(seconds: 1));
           if (widget.screenState == ScreenState.cancelling) {
-            widget.screenState = ScreenState.initialized;
+            setState(() {
+              widget.screenState = ScreenState.initialized;
+            });
             return;
           }
         }
@@ -202,16 +199,16 @@ class _HistoryScreenState extends State<HistoryScreen> {
       case ScreenState.initialized:
         return const Icon(Icons.download);
       case ScreenState.downloading:
-        return const Stack(
-          children: [
-            Positioned.fill(child: Padding(padding: EdgeInsets.all(8.0), child: CircularProgressIndicator())),
-            Positioned.fill(child: Icon(Icons.downloading)),
-          ],
-        );
+        return Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: CircularProgressIndicator(
+              color: Theme.of(context).colorScheme.onSurface,
+              strokeWidth: 0.8,
+            ));
       case ScreenState.downloaded:
         return const Icon(Icons.ios_share_outlined);
       case ScreenState.cancelling:
-        return const Icon(Icons.downloading);
+        return const Icon(Icons.close);
     }
   }
 
