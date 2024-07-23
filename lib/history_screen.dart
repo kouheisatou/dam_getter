@@ -1,6 +1,10 @@
 import 'dart:io';
+import 'dart:math';
 
+import 'package:dam_getter/app_database.dart';
 import 'package:dam_getter/login_screen.dart';
+import 'package:dam_getter/score_data_model.dart';
+import 'package:dam_getter/score_list_model.dart';
 import 'package:dam_getter/values_public.dart';
 import 'package:dam_getter/values_static.dart';
 import 'package:flutter/cupertino.dart';
@@ -22,8 +26,36 @@ class HistoryScreen extends StatefulWidget {
 }
 
 class _HistoryScreenState extends State<HistoryScreen> {
-  Future<String> fetchScores(String baseURL) async {
+  final ListModel<ScoreDataModel> _list = ListModel(listKey: GlobalKey<AnimatedListState>());
 
+  Future<void> getScoresFromDb() async {
+    var db = await AppDatabase.getDatabase();
+    var scoresFromDb = await db.scoreDao.getAllScores();
+    for (var scoreInDb in scoresFromDb) {
+      insertToList(scoreInDb);
+    }
+  }
+
+  void insertToList(ScoreDataModel insertTarget) {
+    if (_list.length == 0) {
+      setState(() {
+        _list.insert(0, insertTarget);
+      });
+    } else {
+      for (var i = 0; i < _list.length; i++) {
+        ScoreDataModel score = _list[i];
+        if (score.scoringTime < insertTarget.scoringTime) {
+          setState(() {
+            _list.insert(i, insertTarget);
+          });
+          return;
+        }
+      }
+      _list.insert(_list.length, insertTarget);
+    }
+  }
+
+  Future<String> fetchScores(String baseURL) async {
     final prefs = await SharedPreferences.getInstance();
     cdmToken = prefs.getString("cdm_token");
     cdmCardNo = prefs.getString("cdm_card_no");
@@ -60,89 +92,75 @@ class _HistoryScreenState extends State<HistoryScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Stack(
-            alignment: Alignment.bottomCenter,
-            children: [
-              DropdownButton<String>(
-                underline: SizedBox(
-                  height: 0.5,
-                  child: Visibility(
-                    visible: widget.downloading,
-                    child: LinearProgressIndicator(
-                      value: widget.progress,
-                    ),
-                  ),
+      body: AnimatedList(
+        itemBuilder: (BuildContext context, int index, Animation<double> animation) {
+          var score = _list[index];
+          return SizeTransition(
+            sizeFactor: animation,
+            child: Card(
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: ListTile(
+                  title: Text(score.contentsName),
+                  subtitle: Text(score.scoringTime.toString()),
+                  trailing: Text(score.score.toString()),
                 ),
-                value: widget.selectedScoreType,
-                onChanged: (String? newValue) {
-                  setState(() {
-                    if (newValue != null) {
-                      widget.selectedScoreType = newValue;
-                    }
-                  });
-                },
-                items: SCORE_TYPES.keys.map<DropdownMenuItem<String>>((String value) {
-                  return DropdownMenuItem<String>(
-                    value: value,
-                    child: Text(value),
-                  );
-                }).toList(),
               ),
-            ],
-          ),
-          Padding(
-            padding: const EdgeInsets.all(80.0),
-            child: IconButton(
-              onPressed: widget.downloading
-                  ? null
-                  : () async {
-                      if (SCORE_TYPES[widget.selectedScoreType] != null) {
-                        setState(() {
-                          widget.downloading = true;
-                        });
-                        try {
-                          var result = await fetchScores(SCORE_TYPES[widget.selectedScoreType]!);
-                          print(result);
-
-                          final directory = await getApplicationDocumentsDirectory();
-                          var fileName = "${widget.selectedScoreType}.xml";
-                          var filePath = "${directory.path}/$fileName";
-                          var file = File(filePath);
-                          await file.writeAsString(result);
-
-                          Share.shareXFiles(
-                            [XFile(filePath)],
-                            subject: fileName,
-                            sharePositionOrigin: const Rect.fromLTWH(0, 0, 300, 300),
-                          );
-                        } catch (e) {
-                          print(e);
-                          Fluttertoast.showToast(msg: "ログインが必要です");
-
-                          await Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) {
-                                return LoginScreen();
-                              },
-                              fullscreenDialog: true,
-                            ),
-                          );
-                        } finally {
-                          setState(() {
-                            widget.downloading = false;
-                          });
-                        }
-                      }
-                    },
-              icon: widget.downloading ? const CircularProgressIndicator() : const Icon(Icons.download),
             ),
-          ),
-        ],
+          );
+        },
+        key: _list.listKey,
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () async {
+          insertToList(ScoreDataModel("id", ScoreType.ai, "contentsName", "artistName", 92.104, "xml", Random().nextInt(10)));
+          return;
+
+          if (SCORE_TYPES[widget.selectedScoreType] != null) {
+            setState(() {
+              widget.downloading = true;
+            });
+            try {
+              var result = await fetchScores(SCORE_TYPES[widget.selectedScoreType]!);
+              print(result);
+
+              final directory = await getApplicationDocumentsDirectory();
+              var fileName = "${widget.selectedScoreType}.xml";
+              var filePath = "${directory.path}/$fileName";
+              var file = File(filePath);
+              await file.writeAsString(result);
+
+              Share.shareXFiles(
+                [XFile(filePath)],
+                subject: fileName,
+                sharePositionOrigin: const Rect.fromLTWH(0, 0, 300, 300),
+              );
+            } catch (e) {
+              print(e);
+              Fluttertoast.showToast(msg: "ログインが必要です");
+
+              await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) {
+                    return LoginScreen();
+                  },
+                  fullscreenDialog: true,
+                ),
+              );
+            } finally {
+              setState(() {
+                widget.downloading = false;
+              });
+            }
+          }
+        },
       ),
     );
+  }
+
+  @override
+  void initState() {
+    getScoresFromDb();
   }
 }

@@ -96,7 +96,7 @@ class _$AppDatabase extends AppDatabase {
       },
       onCreate: (database, version) async {
         await database.execute(
-            'CREATE TABLE IF NOT EXISTS `score` (`id` TEXT NOT NULL, `scoreType` INTEGER NOT NULL, `contentsName` TEXT NOT NULL, `artistName` TEXT NOT NULL, `score` TEXT NOT NULL, PRIMARY KEY (`id`, `scoreType`))');
+            'CREATE TABLE IF NOT EXISTS `score` (`id` TEXT NOT NULL, `scoreType` INTEGER NOT NULL, `contentsName` TEXT NOT NULL, `artistName` TEXT NOT NULL, `score` REAL NOT NULL, `xml` TEXT NOT NULL, `scoringTime` INTEGER NOT NULL, PRIMARY KEY (`id`, `scoreType`))');
 
         await callback?.onCreate?.call(database, version);
       },
@@ -123,7 +123,9 @@ class _$ScoreDao extends ScoreDao {
                   'scoreType': item.scoreType.index,
                   'contentsName': item.contentsName,
                   'artistName': item.artistName,
-                  'score': item.score
+                  'score': item.score,
+                  'xml': item.xml,
+                  'scoringTime': item.scoringTime
                 });
 
   final sqflite.DatabaseExecutor database;
@@ -138,11 +140,13 @@ class _$ScoreDao extends ScoreDao {
   Future<List<ScoreDataModel>> getAllScores() async {
     return _queryAdapter.queryList('SELECT * FROM score',
         mapper: (Map<String, Object?> row) => ScoreDataModel(
-            ScoreType.values[row['scoreType'] as int],
             row['id'] as String,
+            ScoreType.values[row['scoreType'] as int],
             row['contentsName'] as String,
             row['artistName'] as String,
-            row['score'] as String));
+            row['score'] as double,
+            row['xml'] as String,
+            row['scoringTime'] as int));
   }
 
   @override

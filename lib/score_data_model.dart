@@ -1,13 +1,14 @@
 import 'package:floor/floor.dart';
 
-enum ScoreType{
-  ai, dxg
-}
+enum ScoreType { ai, dxg }
 
 @Entity(tableName: "score")
-class ScoreDataModel{
+class ScoreDataModel {
+  ScoreDataModel(this.id, this.scoreType, this.contentsName, this.artistName, this.score, this.xml, this.scoringTime);
 
-  ScoreDataModel(this.scoreType, this.id, this.contentsName, this.artistName, this.score);
+  // ScoreDataModel.fromXml(String xml, this.scoreType){
+  //
+  // }
 
   @primaryKey
   String id;
@@ -19,7 +20,11 @@ class ScoreDataModel{
 
   String artistName;
 
-  String score;
+  double score;
+
+  String xml;
+
+  int scoringTime;
 
   @override
   bool operator ==(Object other) => identical(this, other) || other is ScoreDataModel && runtimeType == other.runtimeType && scoreType == other.scoreType && id == other.id;
