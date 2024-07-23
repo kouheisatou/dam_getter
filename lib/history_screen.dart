@@ -4,7 +4,7 @@ import 'dart:math';
 import 'package:dam_getter/app_database.dart';
 import 'package:dam_getter/login_screen.dart';
 import 'package:dam_getter/score_data_model.dart';
-import 'package:dam_getter/score_list_model.dart';
+import 'package:dam_getter/list_model.dart';
 import 'package:dam_getter/values_public.dart';
 import 'package:dam_getter/values_static.dart';
 import 'package:flutter/cupertino.dart';
@@ -20,10 +20,11 @@ class HistoryScreen extends StatefulWidget {
   @override
   State<HistoryScreen> createState() => _HistoryScreenState();
 
-  String selectedScoreType = SCORE_TYPES.keys.first;
-  bool downloading = false;
+  ScreenState screenState = ScreenState.initialized;
   double progress = 0.0;
 }
+
+enum ScreenState { initialized, downloading, downloaded, cancelling }
 
 class _HistoryScreenState extends State<HistoryScreen> {
   final ListModel<ScoreDataModel> _list = ListModel(listKey: GlobalKey<AnimatedListState>());
@@ -36,7 +37,9 @@ class _HistoryScreenState extends State<HistoryScreen> {
     }
   }
 
-  void insertToList(ScoreDataModel insertTarget) {
+  Future<void> insertToList(ScoreDataModel insertTarget) async {
+    if (_list.contains(insertTarget)) return;
+
     if (_list.length == 0) {
       setState(() {
         _list.insert(0, insertTarget);
@@ -53,40 +56,94 @@ class _HistoryScreenState extends State<HistoryScreen> {
       }
       _list.insert(_list.length, insertTarget);
     }
+
+    var db = await AppDatabase.getDatabase();
+    await db.scoreDao.insertScore(insertTarget);
   }
 
-  Future<String> fetchScores(String baseURL) async {
-    final prefs = await SharedPreferences.getInstance();
-    cdmToken = prefs.getString("cdm_token");
-    cdmCardNo = prefs.getString("cdm_card_no");
+  Future<void> startDownload() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      cdmToken = prefs.getString("cdm_token");
+      cdmCardNo = prefs.getString("cdm_card_no");
+      if (cdmToken == null || cdmCardNo == null) throw Exception("invalid token");
 
-    if (cdmToken == null || cdmCardNo == null) throw Exception("invalid token");
-
-    var hasNext = true;
-    var pageNo = 1;
-    List<String> dumpedResults = [];
-    while (hasNext) {
-      var url = baseURL.replaceAll("\${cdmCardNo}", cdmCardNo!).replaceAll("\${cdmToken}", cdmToken!).replaceAll("\${UTCserial}", DateTime.now().millisecondsSinceEpoch.toString()).replaceAll("\${pageNo}", pageNo.toString());
-      print(url);
-      var resp = await http.get(Uri.parse(url), headers: {'Content-Type': 'application/xml'});
-      var xmlDocument = xml.XmlDocument.parse(resp.body);
-      hasNext = xmlDocument.findAllElements('page').first.getAttribute('hasNext') == "1";
       setState(() {
-        widget.progress = pageNo.toDouble() / double.parse(xmlDocument.findAllElements('page').first.getAttribute('pageCount').toString());
+        widget.screenState = ScreenState.downloading;
       });
-      pageNo++;
-      for (var data in xmlDocument.findAllElements("data")) {
-        dumpedResults.add(data.toString());
-      }
-      await Future.delayed(const Duration(seconds: 1));
-    }
 
-    var resultXmlString = '<document xmlns="https://www.clubdam.com/${Uri.parse(baseURL).path}" type="2.2"><list count="${dumpedResults.length}">';
-    for (var dumpedResult in dumpedResults) {
-      resultXmlString += dumpedResult;
+      for (var scoreType in SCORE_TYPES.entries) {
+        var baseUrl = scoreType.value;
+        var hasNext = true;
+        var pageNo = 1;
+        while (hasNext) {
+          var url = baseUrl.replaceAll("\${cdmCardNo}", cdmCardNo!).replaceAll("\${cdmToken}", cdmToken!).replaceAll("\${UTCserial}", DateTime.now().millisecondsSinceEpoch.toString()).replaceAll("\${pageNo}", pageNo.toString());
+          print(url);
+          var resp = await http.get(Uri.parse(url), headers: {'Content-Type': 'application/xml'});
+          var xmlDocument = xml.XmlDocument.parse(resp.body);
+          hasNext = xmlDocument.findAllElements('page').first.getAttribute('hasNext') == "1";
+          setState(() {
+            widget.progress = pageNo.toDouble() / double.parse(xmlDocument.findAllElements('page').first.getAttribute('pageCount').toString());
+          });
+          pageNo++;
+          for (var scoringXml in xmlDocument.findAllElements("scoring")) {
+            await insertToList(ScoreDataModel.fromXml(scoringXml, scoreType.key));
+          }
+          await Future.delayed(const Duration(seconds: 1));
+          if (widget.screenState == ScreenState.cancelling) {
+            widget.screenState = ScreenState.initialized;
+            break;
+          }
+        }
+      }
+
+      setState(() {
+        widget.screenState = ScreenState.downloaded;
+      });
+    } catch (e) {
+      print(e);
+      Fluttertoast.showToast(msg: "ログインが必要です");
+
+      await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) {
+            return LoginScreen();
+          },
+          fullscreenDialog: true,
+        ),
+      );
+
+      setState(() {
+        widget.screenState = ScreenState.initialized;
+      });
     }
-    resultXmlString += "</list></document>";
-    return resultXmlString;
+  }
+
+  Future<void> cancelDownload() async {
+    widget.screenState = ScreenState.cancelling;
+  }
+
+  Future<void> shareScores() async {
+    final directory = await getApplicationDocumentsDirectory();
+    var fileName = "dam_scores.xml";
+    var filePath = "${directory.path}/$fileName";
+    var file = File(filePath);
+
+    var result = '<?xml version="1.0" encoding="UTF-8"?><scores>';
+    for (var i = 0; i < _list.length; i++) {
+      var score = _list[i];
+      result += score.xml;
+    }
+    result += '<scores>';
+
+    await file.writeAsString(result);
+
+    Share.shareXFiles(
+      [XFile(filePath)],
+      subject: fileName,
+      sharePositionOrigin: const Rect.fromLTWH(0, 0, 300, 300),
+    );
   }
 
   @override
@@ -113,50 +170,42 @@ class _HistoryScreenState extends State<HistoryScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
-          insertToList(ScoreDataModel("id", ScoreType.ai, "contentsName", "artistName", 92.104, "xml", Random().nextInt(10)));
-          return;
-
-          if (SCORE_TYPES[widget.selectedScoreType] != null) {
-            setState(() {
-              widget.downloading = true;
-            });
-            try {
-              var result = await fetchScores(SCORE_TYPES[widget.selectedScoreType]!);
-              print(result);
-
-              final directory = await getApplicationDocumentsDirectory();
-              var fileName = "${widget.selectedScoreType}.xml";
-              var filePath = "${directory.path}/$fileName";
-              var file = File(filePath);
-              await file.writeAsString(result);
-
-              Share.shareXFiles(
-                [XFile(filePath)],
-                subject: fileName,
-                sharePositionOrigin: const Rect.fromLTWH(0, 0, 300, 300),
-              );
-            } catch (e) {
-              print(e);
-              Fluttertoast.showToast(msg: "ログインが必要です");
-
-              await Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) {
-                    return LoginScreen();
-                  },
-                  fullscreenDialog: true,
-                ),
-              );
-            } finally {
-              setState(() {
-                widget.downloading = false;
-              });
-            }
+          switch (widget.screenState) {
+            case ScreenState.initialized:
+              await startDownload();
+              break;
+            case ScreenState.downloading:
+              await cancelDownload();
+              break;
+            case ScreenState.downloaded:
+              await shareScores();
+              break;
+            case ScreenState.cancelling:
+              await cancelDownload();
+              break;
           }
         },
+        child: buildActionButton(),
       ),
     );
+  }
+
+  Widget buildActionButton() {
+    switch (widget.screenState) {
+      case ScreenState.initialized:
+        return const Icon(Icons.download);
+      case ScreenState.downloading:
+        return Stack(
+          children: [
+            Positioned.fill(child: Padding(padding: const EdgeInsets.all(8.0), child: CircularProgressIndicator(value: widget.progress))),
+            const Positioned.fill(child: Icon(Icons.downloading)),
+          ],
+        );
+      case ScreenState.downloaded:
+        return const Icon(Icons.ios_share_outlined);
+      case ScreenState.cancelling:
+        return const Icon(Icons.downloading);
+    }
   }
 
   @override

@@ -152,6 +152,6 @@ class _$ScoreDao extends ScoreDao {
   @override
   Future<void> insertScore(ScoreDataModel score) async {
     await _scoreDataModelInsertionAdapter.insert(
-        score, OnConflictStrategy.abort);
+        score, OnConflictStrategy.replace);
   }
 }

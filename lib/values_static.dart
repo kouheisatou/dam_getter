@@ -1,7 +1,9 @@
+import 'package:dam_getter/score_data_model.dart';
+
 String DAM_MYPAGE_URL = "https://www.clubdam.com/app/damtomo/MyPage.do";
-Map<String, String> SCORE_TYPES = {
-  "精密採点Ai": "https://www.clubdam.com/app/damtomo/scoring/GetScoringAiListXML.do?cdmCardNo=\${cdmCardNo}&cdmToken=\${cdmToken}&enc=sjis&pageNo=\${pageNo}&detailFlg=1&UTCserial=\${UTCserial}",
-  "精密採点DX-G": "https://www.clubdam.com/app/damtomo/scoring/GetScoringDxgListXML.do?cdmCardNo=\${cdmCardNo}&cdmToken=\${cdmToken}&enc=sjis&pageNo=\${pageNo}&detailFlg=1&dxgType=1&UTCserial=\${UTCserial}",
+Map<ScoreType, String> SCORE_TYPES = {
+  ScoreType.ai: "https://www.clubdam.com/app/damtomo/scoring/GetScoringAiListXML.do?cdmCardNo=\${cdmCardNo}&cdmToken=\${cdmToken}&enc=sjis&pageNo=\${pageNo}&detailFlg=1&UTCserial=\${UTCserial}",
+  ScoreType.dxg: "https://www.clubdam.com/app/damtomo/scoring/GetScoringDxgListXML.do?cdmCardNo=\${cdmCardNo}&cdmToken=\${cdmToken}&enc=sjis&pageNo=\${pageNo}&detailFlg=1&dxgType=1&UTCserial=\${UTCserial}",
   // "精密採点DX デュエット": "https://www.clubdam.com/app/damtomo/scoring/GetScoringDxgListXML.do?cdmCardNo=\${cdmCardNo}&cdmToken=\${cdmToken}&enc=sjis&pageNo=\${pageNo}&detailFlg=1&dxgType=2&UTCserial=\${UTCserial}",
   // "精密採点DX ミリオン": "https://www.clubdam.com/app/damtomo/scoring/GetScoringMillionHistoryListXML.do?cdmCardNo=\${cdmCardNo}&cdmToken=\${cdmToken}&enc=sjis&favoriteFlg=0&pageNo=\${pageNo}&sort=2&UTCserial=\${UTCserial}",
   // "ランキングバトル ONLINE": "https://www.clubdam.com/app/xml/membership/damtomo/rankingList.do?cdmCardNo=\${cdmCardNo}&cdmToken=\${cdmToken}&enc=sjis&page=\${pageNo}&UTCserial=\${UTCserial}",

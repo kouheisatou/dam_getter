@@ -21,4 +21,6 @@ class ListModel<E> {
   E operator [](int index) => _items[index];
 
   int indexOf(E item) => _items.indexOf(item);
+
+  bool contains(E item) => _items.contains(item);
 }

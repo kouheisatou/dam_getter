@@ -1,4 +1,5 @@
 import 'package:floor/floor.dart';
+import 'package:xml/xml.dart';
 
 enum ScoreType { ai, dxg }
 
@@ -6,25 +7,31 @@ enum ScoreType { ai, dxg }
 class ScoreDataModel {
   ScoreDataModel(this.id, this.scoreType, this.contentsName, this.artistName, this.score, this.xml, this.scoringTime);
 
-  // ScoreDataModel.fromXml(String xml, this.scoreType){
-  //
-  // }
+  ScoreDataModel.fromXml(XmlElement scoringXml, ScoreType type) {
+    id = type == ScoreType.ai ? scoringXml.getAttribute("scoringAiId")! : scoringXml.getAttribute("scoringDxgId")!;
+    scoreType = type;
+    contentsName = scoringXml.getAttribute("contentsName")!;
+    artistName = scoringXml.getAttribute("artistName")!;
+    score = double.parse(scoringXml.innerText) / 1000;
+    xml = scoringXml.toString();
+    scoringTime = int.parse(scoringXml.getAttribute("scoringDateTime")!);
+  }
 
   @primaryKey
-  String id;
+  late String id;
 
   @primaryKey
-  ScoreType scoreType;
+  late ScoreType scoreType;
 
-  String contentsName;
+  late String contentsName;
 
-  String artistName;
+  late String artistName;
 
-  double score;
+  late double score;
 
-  String xml;
+  late String xml;
 
-  int scoringTime;
+  late int scoringTime;
 
   @override
   bool operator ==(Object other) => identical(this, other) || other is ScoreDataModel && runtimeType == other.runtimeType && scoreType == other.scoreType && id == other.id;
