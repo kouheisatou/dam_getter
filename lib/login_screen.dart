@@ -2,7 +2,6 @@ import 'package:dam_getter/values_public.dart';
 import 'package:dam_getter/values_static.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -62,7 +61,7 @@ document.getElementById('LoginButton').click();
                     cdmCardNo = await webView?.evaluateJavascript(source: "DamHistoryManager.getCdmCardNo()");
 
                     if (cdmToken == null || cdmCardNo == null) {
-                      Fluttertoast.showToast(msg: "ログインエラー");
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("ログインエラー")));
                     } else {
                       final prefs = await SharedPreferences.getInstance();
                       await prefs.setString("cdm_token", cdmToken!);

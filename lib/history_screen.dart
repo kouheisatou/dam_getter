@@ -9,7 +9,6 @@ import 'package:dam_getter/values_public.dart';
 import 'package:dam_getter/values_static.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 import "package:http/http.dart" as http;
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
@@ -104,7 +103,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
       });
     } catch (e) {
       print(e);
-      Fluttertoast.showToast(msg: "ログインが必要です");
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("ログインが必要です")));
 
       await Navigator.push(
         context,
