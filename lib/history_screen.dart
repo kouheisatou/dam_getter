@@ -22,7 +22,7 @@ class HistoryScreen extends StatefulWidget {
 }
 
 class _HistoryScreenState extends State<HistoryScreen> {
-  Future<String> fetchScoring(String baseURL) async {
+  Future<String> fetchScores(String baseURL) async {
 
     final prefs = await SharedPreferences.getInstance();
     cdmToken = prefs.getString("cdm_token");
@@ -104,7 +104,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                           widget.downloading = true;
                         });
                         try {
-                          var result = await fetchScoring(SCORE_TYPES[widget.selectedScoreType]!);
+                          var result = await fetchScores(SCORE_TYPES[widget.selectedScoreType]!);
                           print(result);
 
                           final directory = await getApplicationDocumentsDirectory();
