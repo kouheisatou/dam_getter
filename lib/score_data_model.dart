@@ -10,7 +10,7 @@ enum ScoreType { ai, dxg }
 
 @Entity(tableName: "score")
 class ScoreDataModel {
-  ScoreDataModel(this.id, this.scoreType, this.contentsName, this.artistName, this.score, this.xml, this.scoringTime);
+  ScoreDataModel(this.id, this.scoreType, this.contentsName, this.artistName, this.score, this.scoreAverage, this.xml, this.scoringTime);
 
   ScoreDataModel.fromXml(XmlElement scoringXml, ScoreType type) {
     id = type == ScoreType.ai ? scoringXml.getAttribute("scoringAiId")! : scoringXml.getAttribute("scoringDxgId")!;
@@ -18,6 +18,7 @@ class ScoreDataModel {
     contentsName = scoringXml.getAttribute("contentsName")!;
     artistName = scoringXml.getAttribute("artistName")!;
     score = double.parse(scoringXml.innerText) / 1000;
+    scoreAverage = double.parse(scoringXml.getAttribute("artistName")!) / 1000;
     xml = scoringXml.toString();
     scoringTime = int.parse(scoringXml.getAttribute("scoringDateTime")!);
   }
@@ -33,6 +34,8 @@ class ScoreDataModel {
   late String artistName;
 
   late double score;
+
+  late double scoreAverage;
 
   late String xml;
 
@@ -97,12 +100,12 @@ class ScoreDataListItem extends StatelessWidget {
                             Baseline(
                               baseline: 20.0,
                               baselineType: TextBaseline.alphabetic,
-                              child: Text(score.score.toString().split(".")[0], style: TextStyle(fontSize: 20, fontFeatures: [FontFeature.tabularFigures()])),
+                              child: Text(score.score.toString().split(".")[0], style: const TextStyle(fontSize: 20, fontFeatures: [FontFeature.tabularFigures()])),
                             ),
                             Baseline(
                               baseline: 15.8,
                               baselineType: TextBaseline.alphabetic,
-                              child: Text(".${score.score.toStringAsFixed(3).split(".")[1]}", style: TextStyle(fontSize: 10, fontFeatures: [FontFeature.tabularFigures()])),
+                              child: Text(".${score.score.toStringAsFixed(3).split(".")[1]}", style: const TextStyle(fontSize: 10, fontFeatures: [FontFeature.tabularFigures()])),
                             ),
                           ],
                         ),
