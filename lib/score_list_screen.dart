@@ -173,48 +173,51 @@ class _ScoreListScreenState extends State<ScoreListScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Scrollbar(
-        child: _list.length != 0
-            ? AnimatedList(
-                reverse: true,
-                itemBuilder: (BuildContext context, int index, Animation<double> animation) {
-                  ScoreDataModel score = _list[index];
+        child: Stack(
+          children: [
+            AnimatedList(
+              reverse: true,
+              itemBuilder: (BuildContext context, int index, Animation<double> animation) {
+                ScoreDataModel score = _list[index];
 
-                  bool requireDateSeparator = false;
-                  if (index != _list.length - 1) {
-                    ScoreDataModel nextItem = _list[index + 1];
-                    if (parseDatetime(nextItem.scoringTime.toString()).copyWith(hour: 0, minute: 0, second: 0) != parseDatetime(score.scoringTime.toString()).copyWith(hour: 0, minute: 0, second: 0)) {
-                      requireDateSeparator = true;
-                    }
-                  } else {
+                bool requireDateSeparator = false;
+                if (index != _list.length - 1) {
+                  ScoreDataModel nextItem = _list[index + 1];
+                  if (parseDatetime(nextItem.scoringTime.toString()).copyWith(hour: 0, minute: 0, second: 0) != parseDatetime(score.scoringTime.toString()).copyWith(hour: 0, minute: 0, second: 0)) {
                     requireDateSeparator = true;
                   }
+                } else {
+                  requireDateSeparator = true;
+                }
 
-                  List<Widget> children = [ScoreDataListItem(score)];
+                List<Widget> children = [ScoreDataListItem(score)];
 
-                  if (requireDateSeparator) {
-                    children.insert(
-                      0,
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(0, 15, 0, 7),
-                        child: Text(DateFormat("yyyy/MM/dd").format(parseDatetime(score.scoringTime.toString()))),
-                      ),
-                    );
-                  }
+                if (requireDateSeparator) {
+                  children.insert(
+                    0,
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(0, 15, 0, 7),
+                      child: Text(DateFormat("yyyy/MM/dd").format(parseDatetime(score.scoringTime.toString()))),
+                    ),
+                  );
+                }
 
-                  if (index == 0) {
-                    children.add(
-                      Padding(
-                        padding: const EdgeInsets.all(30.0),
-                        child: actionButton(),
-                      ),
-                    );
-                  }
+                if (index == 0) {
+                  children.add(
+                    Padding(
+                      padding: const EdgeInsets.all(30.0),
+                      child: actionButton(),
+                    ),
+                  );
+                }
 
-                  return SizeTransition(sizeFactor: animation, child: Column(children: children));
-                },
-                key: _list.listKey,
-              )
-            : Center(child: actionButton()),
+                return SizeTransition(sizeFactor: animation, child: Column(children: children));
+              },
+              key: _list.listKey,
+            ),
+            Visibility(visible: _list.length == 0, child: Center(child: actionButton())),
+          ],
+        ),
       ),
     );
   }
