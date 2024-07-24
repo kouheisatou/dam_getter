@@ -18,7 +18,7 @@ class ScoreDataModel {
     contentsName = scoringXml.getAttribute("contentsName")!;
     artistName = scoringXml.getAttribute("artistName")!;
     score = double.parse(scoringXml.innerText) / 1000;
-    scoreAverage = double.parse(scoringXml.getAttribute("artistName")!) / 1000;
+    scoreAverage = double.parse(scoringXml.getAttribute("nationalAverageTotalPoints")!) / 1000;
     xml = scoringXml.toString();
     scoringTime = int.parse(scoringXml.getAttribute("scoringDateTime")!);
   }

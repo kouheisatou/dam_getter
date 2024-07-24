@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:dam_getter/app_database.dart';
+import 'package:dam_getter/exception.dart';
 import 'package:dam_getter/login_screen.dart';
 import 'package:dam_getter/score_data_model.dart';
 import 'package:dam_getter/list_model.dart';
@@ -66,7 +67,7 @@ class _ScoreListScreenState extends State<ScoreListScreen> {
       final prefs = await SharedPreferences.getInstance();
       cdmToken = prefs.getString("cdm_token");
       cdmCardNo = prefs.getString("cdm_card_no");
-      if (cdmToken == null || cdmCardNo == null) throw Exception("invalid token");
+      if (cdmToken == null || cdmCardNo == null) throw LoginException();
 
       setState(() {
         widget.screenState = ScreenState.downloading;
@@ -102,8 +103,7 @@ class _ScoreListScreenState extends State<ScoreListScreen> {
       setState(() {
         widget.screenState = ScreenState.downloaded;
       });
-    } catch (e) {
-      print(e);
+    } on LoginException {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("ログインが必要です")));
 
       await Navigator.push(
@@ -115,6 +115,12 @@ class _ScoreListScreenState extends State<ScoreListScreen> {
           fullscreenDialog: true,
         ),
       );
+
+      setState(() {
+        widget.screenState = ScreenState.initialized;
+      });
+    } catch (e) {
+      print(e);
 
       setState(() {
         widget.screenState = ScreenState.initialized;
