@@ -15,7 +15,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:xml/xml.dart' as xml;
 
-import 'scoreListItem.dart';
+import 'score_list_item.dart';
 
 class ScoreListScreen extends StatefulWidget {
   @override
@@ -159,58 +159,67 @@ class _ScoreListScreenState extends State<ScoreListScreen> {
     return Scaffold(
       body: Scrollbar(
         child: AnimatedList(
+          reverse: true,
           itemBuilder: (BuildContext context, int index, Animation<double> animation) {
             ScoreDataModel score = _list[index];
 
             bool requireDateSeparator = false;
-            if (index > 0) {
-              ScoreDataModel prevItem = _list[index - 1];
-              if (parseDatetime(prevItem.scoringTime.toString()).copyWith(hour: 0, minute: 0, second: 0) != parseDatetime(score.scoringTime.toString()).copyWith(hour: 0, minute: 0, second: 0)) {
+            if (index != _list.length - 1) {
+              ScoreDataModel nextItem = _list[index + 1];
+              if (parseDatetime(nextItem.scoringTime.toString()).copyWith(hour: 0, minute: 0, second: 0) != parseDatetime(score.scoringTime.toString()).copyWith(hour: 0, minute: 0, second: 0)) {
                 requireDateSeparator = true;
               }
             } else {
               requireDateSeparator = true;
             }
 
-            return Padding(
-              padding: index == _list.length - 1 ? const EdgeInsets.fromLTRB(0, 0, 0, 75) : EdgeInsets.zero,
-              child: SizeTransition(
-                sizeFactor: animation,
-                child: requireDateSeparator
-                    ? Column(
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(0, 15, 0, 7),
-                          child: Text(DateFormat("yyyy/MM/dd").format(parseDatetime(score.scoringTime.toString()))),
-                        ),
-                        ScoreDataListItem(score),
-                      ],
-                    )
-                    : ScoreDataListItem(score),
-              ),
-            );
+            List<Widget> children = [ScoreDataListItem(score)];
+
+            if (requireDateSeparator) {
+              children.insert(
+                0,
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(0, 15, 0, 7),
+                  child: Text(DateFormat("yyyy/MM/dd").format(parseDatetime(score.scoringTime.toString()))),
+                ),
+              );
+            }
+
+            if (index == 0) {
+              children.add(
+                Padding(
+                  padding: const EdgeInsets.all(30.0),
+                  child: SizedBox(
+                    height: 40,
+                    width: 40,
+                    child: IconButton(
+                      onPressed: () async {
+                        switch (widget.screenState) {
+                          case ScreenState.initialized:
+                            await startDownload();
+                            break;
+                          case ScreenState.downloading:
+                            await cancelDownload();
+                            break;
+                          case ScreenState.downloaded:
+                            await shareScoresXml();
+                            break;
+                          case ScreenState.cancelling:
+                            await cancelDownload();
+                            break;
+                        }
+                      },
+                      icon: buildActionButton(),
+                    ),
+                  ),
+                ),
+              );
+            }
+
+            return SizeTransition(sizeFactor: animation, child: Column(children: children));
           },
           key: _list.listKey,
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          switch (widget.screenState) {
-            case ScreenState.initialized:
-              await startDownload();
-              break;
-            case ScreenState.downloading:
-              await cancelDownload();
-              break;
-            case ScreenState.downloaded:
-              await shareScoresXml();
-              break;
-            case ScreenState.cancelling:
-              await cancelDownload();
-              break;
-          }
-        },
-        child: buildActionButton(),
       ),
     );
   }
@@ -220,12 +229,9 @@ class _ScoreListScreenState extends State<ScoreListScreen> {
       case ScreenState.initialized:
         return const Icon(Icons.download);
       case ScreenState.downloading:
-        return Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: CircularProgressIndicator(
-            color: Theme.of(context).colorScheme.onSurface,
-            strokeWidth: 0.8,
-          ),
+        return CircularProgressIndicator(
+          color: Theme.of(context).colorScheme.onSurface,
+          strokeWidth: 0.8,
         );
       case ScreenState.downloaded:
         return const Icon(Icons.ios_share_outlined);

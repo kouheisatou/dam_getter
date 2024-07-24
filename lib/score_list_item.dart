@@ -71,7 +71,7 @@ class ScoreDataListItem extends StatelessWidget {
                                 child: Text(score.score.toString().split(".")[0], style: const TextStyle(fontSize: 20, fontFeatures: [FontFeature.tabularFigures()])),
                               ),
                               Baseline(
-                                baseline: 15.8,
+                                baseline: 18.0,
                                 baselineType: TextBaseline.alphabetic,
                                 child: Text(".${score.score.toStringAsFixed(3).split(".")[1]}", style: const TextStyle(fontSize: 10, fontFeatures: [FontFeature.tabularFigures()])),
                               ),
