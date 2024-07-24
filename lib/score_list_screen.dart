@@ -56,25 +56,26 @@ class _ScoreListScreenState extends State<ScoreListScreen> {
   Future<void> insertToList(ScoreDataModel insertTarget) async {
     if (_list.contains(insertTarget)) return;
 
+    var db = await AppDatabase.getDatabase();
+
     if (_list.length == 0) {
-      setState(() {
-        _list.insert(0, insertTarget);
-      });
+      _list.insert(0, insertTarget);
+      await db.scoreDao.insertScore(insertTarget);
+      setState(() {});
     } else {
       for (var i = 0; i < _list.length; i++) {
         ScoreDataModel score = _list[i];
         if (score.scoringTime < insertTarget.scoringTime) {
-          setState(() {
-            _list.insert(i, insertTarget);
-          });
+          _list.insert(i, insertTarget);
+          await db.scoreDao.insertScore(insertTarget);
+          setState(() {});
           return;
         }
       }
       _list.insert(_list.length, insertTarget);
+      await db.scoreDao.insertScore(insertTarget);
+      setState(() {});
     }
-
-    var db = await AppDatabase.getDatabase();
-    await db.scoreDao.insertScore(insertTarget);
   }
 
   Future<void> startDownload() async {
