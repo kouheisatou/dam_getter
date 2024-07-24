@@ -31,6 +31,21 @@ class _ScoreListScreenState extends State<ScoreListScreen> {
   final ListModel<ScoreDataModel> _list = ListModel(listKey: GlobalKey<AnimatedListState>());
 
   Future<void> getScoresFromDb() async {
+    // first launch
+    var prefs = await SharedPreferences.getInstance();
+    if (prefs.getString("dam_id") == null && prefs.getString("dam_password") == null) {
+      await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) {
+            return LoginScreen();
+          },
+          fullscreenDialog: true,
+        ),
+      );
+      return;
+    }
+
     var db = await AppDatabase.getDatabase();
     var scoresFromDb = await db.scoreDao.getAllScores();
     for (var scoreInDb in scoresFromDb) {
@@ -158,86 +173,91 @@ class _ScoreListScreenState extends State<ScoreListScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Scrollbar(
-        child: AnimatedList(
-          reverse: true,
-          itemBuilder: (BuildContext context, int index, Animation<double> animation) {
-            ScoreDataModel score = _list[index];
+        child: _list.length != 0
+            ? AnimatedList(
+                reverse: true,
+                itemBuilder: (BuildContext context, int index, Animation<double> animation) {
+                  ScoreDataModel score = _list[index];
 
-            bool requireDateSeparator = false;
-            if (index != _list.length - 1) {
-              ScoreDataModel nextItem = _list[index + 1];
-              if (parseDatetime(nextItem.scoringTime.toString()).copyWith(hour: 0, minute: 0, second: 0) != parseDatetime(score.scoringTime.toString()).copyWith(hour: 0, minute: 0, second: 0)) {
-                requireDateSeparator = true;
-              }
-            } else {
-              requireDateSeparator = true;
-            }
+                  bool requireDateSeparator = false;
+                  if (index != _list.length - 1) {
+                    ScoreDataModel nextItem = _list[index + 1];
+                    if (parseDatetime(nextItem.scoringTime.toString()).copyWith(hour: 0, minute: 0, second: 0) != parseDatetime(score.scoringTime.toString()).copyWith(hour: 0, minute: 0, second: 0)) {
+                      requireDateSeparator = true;
+                    }
+                  } else {
+                    requireDateSeparator = true;
+                  }
 
-            List<Widget> children = [ScoreDataListItem(score)];
+                  List<Widget> children = [ScoreDataListItem(score)];
 
-            if (requireDateSeparator) {
-              children.insert(
-                0,
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(0, 15, 0, 7),
-                  child: Text(DateFormat("yyyy/MM/dd").format(parseDatetime(score.scoringTime.toString()))),
-                ),
-              );
-            }
+                  if (requireDateSeparator) {
+                    children.insert(
+                      0,
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(0, 15, 0, 7),
+                        child: Text(DateFormat("yyyy/MM/dd").format(parseDatetime(score.scoringTime.toString()))),
+                      ),
+                    );
+                  }
 
-            if (index == 0) {
-              children.add(
-                Padding(
-                  padding: const EdgeInsets.all(30.0),
-                  child: SizedBox(
-                    height: 40,
-                    width: 40,
-                    child: IconButton(
-                      onPressed: () async {
-                        switch (widget.screenState) {
-                          case ScreenState.initialized:
-                            await startDownload();
-                            break;
-                          case ScreenState.downloading:
-                            await cancelDownload();
-                            break;
-                          case ScreenState.downloaded:
-                            await shareScoresXml();
-                            break;
-                          case ScreenState.cancelling:
-                            await cancelDownload();
-                            break;
-                        }
-                      },
-                      icon: buildActionButton(),
-                    ),
-                  ),
-                ),
-              );
-            }
+                  if (index == 0) {
+                    children.add(
+                      Padding(
+                        padding: const EdgeInsets.all(30.0),
+                        child: actionButton(),
+                      ),
+                    );
+                  }
 
-            return SizeTransition(sizeFactor: animation, child: Column(children: children));
-          },
-          key: _list.listKey,
-        ),
+                  return SizeTransition(sizeFactor: animation, child: Column(children: children));
+                },
+                key: _list.listKey,
+              )
+            : Center(child: actionButton()),
       ),
     );
   }
 
-  Widget buildActionButton() {
+  Widget actionButton() {
+    Widget icon;
     switch (widget.screenState) {
       case ScreenState.initialized:
-        return const Icon(Icons.download);
+        icon = const Icon(Icons.download);
       case ScreenState.downloading:
-        return CircularProgressIndicator(
+        icon = CircularProgressIndicator(
           color: Theme.of(context).colorScheme.onSurface,
           strokeWidth: 0.8,
         );
       case ScreenState.downloaded:
-        return const Icon(Icons.ios_share_outlined);
+        icon = const Icon(Icons.ios_share_outlined);
       case ScreenState.cancelling:
-        return const Icon(Icons.close);
+        icon = const Icon(Icons.close);
     }
+
+    return SizedBox(
+      height: 40,
+      width: 40,
+      child: IconButton(
+        onPressed: () async {
+          switch (widget.screenState) {
+            case ScreenState.initialized:
+              await startDownload();
+              break;
+            case ScreenState.downloading:
+              await cancelDownload();
+              break;
+            case ScreenState.downloaded:
+              await shareScoresXml();
+              break;
+            case ScreenState.cancelling:
+              await cancelDownload();
+              break;
+          }
+        },
+        icon: icon,
+      ),
+    );
   }
 
   @override

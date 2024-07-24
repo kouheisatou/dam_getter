@@ -66,6 +66,9 @@ document.getElementById('LoginButton').click();
                       final prefs = await SharedPreferences.getInstance();
                       await prefs.setString("cdm_token", cdmToken!);
                       await prefs.setString("cdm_card_no", cdmCardNo!);
+                      print("login succeeded");
+                      print("cmd_token=$cdmToken");
+                      print("cdm_card_no=$cdmCardNo");
 
                       Navigator.pop(context);
                     }
