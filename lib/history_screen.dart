@@ -5,11 +5,13 @@ import 'package:dam_getter/app_database.dart';
 import 'package:dam_getter/login_screen.dart';
 import 'package:dam_getter/score_data_model.dart';
 import 'package:dam_getter/list_model.dart';
+import 'package:dam_getter/utils.dart';
 import 'package:dam_getter/values_public.dart';
 import 'package:dam_getter/values_static.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import "package:http/http.dart" as http;
+import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -125,7 +127,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
     widget.screenState = ScreenState.cancelling;
   }
 
-  Future<void> shareScores() async {
+  Future<void> shareScoresXml() async {
     final directory = await getApplicationDocumentsDirectory();
     var fileName = "dam_scores.xml";
     var filePath = "${directory.path}/$fileName";
@@ -153,19 +155,31 @@ class _HistoryScreenState extends State<HistoryScreen> {
       body: Scrollbar(
         child: AnimatedList(
           itemBuilder: (BuildContext context, int index, Animation<double> animation) {
-            var score = _list[index];
+            ScoreDataModel score = _list[index];
+
+            bool requireDateSeparator = false;
+            if (index > 0) {
+              ScoreDataModel prevItem = _list[index - 1];
+              if (parseDatetime(prevItem.scoringTime.toString()).copyWith(hour: 0, minute: 0, second: 0) != parseDatetime(score.scoringTime.toString()).copyWith(hour: 0, minute: 0, second: 0)) {
+                requireDateSeparator = true;
+              }
+            } else {
+              requireDateSeparator = true;
+            }
+
             return SizeTransition(
               sizeFactor: animation,
-              child: Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: ListTile(
-                    title: Text(score.contentsName),
-                    subtitle: Text(score.scoringTime.toString()),
-                    trailing: Text(score.score.toString()),
-                  ),
-                ),
-              ),
+              child: requireDateSeparator
+                  ? Column(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(0, 15, 0, 7),
+                          child: Text(DateFormat("yyyy/MM/dd").format(parseDatetime(score.scoringTime.toString()))),
+                        ),
+                        ScoreDataListItem(score),
+                      ],
+                    )
+                  : ScoreDataListItem(score),
             );
           },
           key: _list.listKey,
@@ -181,7 +195,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
               await cancelDownload();
               break;
             case ScreenState.downloaded:
-              await shareScores();
+              await shareScoresXml();
               break;
             case ScreenState.cancelling:
               await cancelDownload();
@@ -199,11 +213,12 @@ class _HistoryScreenState extends State<HistoryScreen> {
         return const Icon(Icons.download);
       case ScreenState.downloading:
         return Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: CircularProgressIndicator(
-              color: Theme.of(context).colorScheme.onSurface,
-              strokeWidth: 0.8,
-            ));
+          padding: const EdgeInsets.all(20.0),
+          child: CircularProgressIndicator(
+            color: Theme.of(context).colorScheme.onSurface,
+            strokeWidth: 0.8,
+          ),
+        );
       case ScreenState.downloaded:
         return const Icon(Icons.ios_share_outlined);
       case ScreenState.cancelling:
