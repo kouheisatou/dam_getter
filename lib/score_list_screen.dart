@@ -172,10 +172,12 @@ class _ScoreListScreenState extends State<ScoreListScreen> {
               requireDateSeparator = true;
             }
 
-            return SizeTransition(
-              sizeFactor: animation,
-              child: requireDateSeparator
-                  ? Column(
+            return Padding(
+              padding: index == _list.length - 1 ? const EdgeInsets.fromLTRB(0, 0, 0, 75) : EdgeInsets.zero,
+              child: SizeTransition(
+                sizeFactor: animation,
+                child: requireDateSeparator
+                    ? Column(
                       children: [
                         Padding(
                           padding: const EdgeInsets.fromLTRB(0, 15, 0, 7),
@@ -184,7 +186,8 @@ class _ScoreListScreenState extends State<ScoreListScreen> {
                         ScoreDataListItem(score),
                       ],
                     )
-                  : ScoreDataListItem(score),
+                    : ScoreDataListItem(score),
+              ),
             );
           },
           key: _list.listKey,
