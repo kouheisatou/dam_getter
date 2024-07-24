@@ -1,6 +1,4 @@
 import 'dart:io';
-import 'dart:math';
-
 import 'package:dam_getter/app_database.dart';
 import 'package:dam_getter/login_screen.dart';
 import 'package:dam_getter/score_data_model.dart';
@@ -8,7 +6,6 @@ import 'package:dam_getter/list_model.dart';
 import 'package:dam_getter/utils.dart';
 import 'package:dam_getter/values_public.dart';
 import 'package:dam_getter/values_static.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import "package:http/http.dart" as http;
 import 'package:intl/intl.dart';
@@ -17,9 +14,11 @@ import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:xml/xml.dart' as xml;
 
-class HistoryScreen extends StatefulWidget {
+import 'scoreListItem.dart';
+
+class ScoreListScreen extends StatefulWidget {
   @override
-  State<HistoryScreen> createState() => _HistoryScreenState();
+  State<ScoreListScreen> createState() => _ScoreListScreenState();
 
   ScreenState screenState = ScreenState.initialized;
   double progress = 0.0;
@@ -27,7 +26,7 @@ class HistoryScreen extends StatefulWidget {
 
 enum ScreenState { initialized, downloading, downloaded, cancelling }
 
-class _HistoryScreenState extends State<HistoryScreen> {
+class _ScoreListScreenState extends State<ScoreListScreen> {
   final ListModel<ScoreDataModel> _list = ListModel(listKey: GlobalKey<AnimatedListState>());
 
   Future<void> getScoresFromDb() async {
