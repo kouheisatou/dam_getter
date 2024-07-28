@@ -1,8 +1,9 @@
-import 'package:dam_getter/values_public.dart';
-import 'package:dam_getter/values_static.dart';
+import 'package:dam_getter/common/values_public.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import '../common/values_static.dart';
 
 class LoginScreen extends StatefulWidget {
   @override

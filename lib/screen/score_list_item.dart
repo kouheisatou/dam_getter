@@ -1,6 +1,6 @@
-import 'package:dam_getter/score_data_model.dart';
-import 'package:dam_getter/score_detail_screen.dart';
-import 'package:dam_getter/utils.dart';
+import 'package:dam_getter/common/database/score_data_model.dart';
+import 'package:dam_getter/screen/score_detail_screen.dart';
+import 'package:dam_getter/common/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 

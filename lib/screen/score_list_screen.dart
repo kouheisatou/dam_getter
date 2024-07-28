@@ -1,12 +1,10 @@
 import 'dart:io';
-import 'package:dam_getter/app_database.dart';
-import 'package:dam_getter/exception.dart';
-import 'package:dam_getter/login_screen.dart';
-import 'package:dam_getter/score_data_model.dart';
-import 'package:dam_getter/list_model.dart';
-import 'package:dam_getter/utils.dart';
-import 'package:dam_getter/values_public.dart';
-import 'package:dam_getter/values_static.dart';
+import 'package:dam_getter/common/database/app_database.dart';
+import 'package:dam_getter/common/exception.dart';
+import 'package:dam_getter/screen/login_screen.dart';
+import 'package:dam_getter/common/list_model.dart';
+import 'package:dam_getter/common/utils.dart';
+import 'package:dam_getter/common/values_public.dart';
 import 'package:flutter/material.dart';
 import "package:http/http.dart" as http;
 import 'package:intl/intl.dart';
@@ -15,6 +13,8 @@ import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:xml/xml.dart' as xml;
 
+import '../common/database/score_data_model.dart';
+import '../common/values_static.dart';
 import 'score_list_item.dart';
 
 class ScoreListScreen extends StatefulWidget {

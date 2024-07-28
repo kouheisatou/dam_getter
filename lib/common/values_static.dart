@@ -1,4 +1,4 @@
-import 'package:dam_getter/score_data_model.dart';
+import 'package:dam_getter/common/database/score_data_model.dart';
 
 String DAM_MYPAGE_URL = "https://www.clubdam.com/app/damtomo/MyPage.do";
 Map<ScoreType, String> SCORE_TYPES = {

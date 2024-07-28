@@ -1,5 +1,4 @@
-import 'package:dam_getter/score_list_screen.dart';
-import 'package:dam_getter/values_public.dart';
+import 'package:dam_getter/screen/score_list_screen.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 

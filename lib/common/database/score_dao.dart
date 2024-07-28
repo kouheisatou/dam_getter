@@ -1,4 +1,4 @@
-import 'package:dam_getter/score_data_model.dart';
+import 'package:dam_getter/common/database/score_data_model.dart';
 import 'package:floor/floor.dart';
 
 @dao

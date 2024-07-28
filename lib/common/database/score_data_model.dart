@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:xml/xml.dart';
 
-import 'utils.dart';
+import '../utils.dart';
 
 enum ScoreType { ai, dxg }
 
