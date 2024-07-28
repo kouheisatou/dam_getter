@@ -8,10 +8,12 @@ import '../utils.dart';
 
 enum ScoreType { ai, dxg }
 
+/// DAM Score Data Model Class
 @Entity(tableName: "score")
 class ScoreDataModel {
   ScoreDataModel(this.id, this.scoreType, this.contentsName, this.artistName, this.score, this.scoreAverage, this.xml, this.scoringTime);
 
+  /// convert from xml api response
   ScoreDataModel.fromXml(XmlElement scoringXml, ScoreType type) {
     id = type == ScoreType.ai ? scoringXml.getAttribute("scoringAiId")! : scoringXml.getAttribute("scoringDxgId")!;
     scoreType = type;

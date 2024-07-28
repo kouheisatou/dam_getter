@@ -19,6 +19,8 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   InAppWebViewController? webView;
 
+  /// Start login flow
+  /// Inject LoginID and password to TextBox in DAM login web page and press click login button using javascript
   Future<void> login(String user, String pass) async {
     await webView?.evaluateJavascript(source: """
 document.getElementById('LoginID').value = '$user';
@@ -33,6 +35,7 @@ document.getElementById('LoginButton').click();
     super.initState();
   }
 
+  /// Recover last userID and password
   Future<void> setSavedUserAndPass() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
@@ -54,16 +57,25 @@ document.getElementById('LoginButton').click();
               child: InAppWebView(
                 initialUrlRequest: URLRequest(url: WebUri(DAM_MYPAGE_URL)),
                 onWebViewCreated: (InAppWebViewController controller) {
+                  // init WebView
                   webView = controller;
                 },
                 onLoadStop: (controller, url) async {
+                  // on finished loading web page
+
+                  // if current url matches DAM my page url, seem that login succeeded
                   if (url.toString() == DAM_MYPAGE_URL) {
+
+                    // get authentication information that exists in DAM web page as javascript variable using javascript
                     cdmToken = await webView?.evaluateJavascript(source: "DamHistoryManager.getCdmToken()");
                     cdmCardNo = await webView?.evaluateJavascript(source: "DamHistoryManager.getCdmCardNo()");
 
+                    // if getting authentication information was failed, show message
                     if (cdmToken == null || cdmCardNo == null) {
                       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("ログインエラー")));
-                    } else {
+                    }
+                    // if the authentication information exists, save this and close LoginScreen
+                    else {
                       final prefs = await SharedPreferences.getInstance();
                       await prefs.setString("cdm_token", cdmToken!);
                       await prefs.setString("cdm_card_no", cdmCardNo!);
@@ -76,6 +88,7 @@ document.getElementById('LoginButton').click();
                   }
                 },
                 initialSettings: InAppWebViewSettings(
+                  // force pc version web page
                   userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36',
                   preferredContentMode: UserPreferredContentMode.DESKTOP,
                 ),
@@ -83,6 +96,7 @@ document.getElementById('LoginButton').click();
             ),
             Positioned.fill(
               child: Container(
+                // hide WebView by overlapping solid color
                 color: Theme.of(context).colorScheme.surface,
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -118,7 +132,10 @@ document.getElementById('LoginButton').click();
                       padding: const EdgeInsets.fromLTRB(0, 50, 0, 100),
                       child: IconButton(
                         onPressed: () async {
+                          // start login
                           await login(widget.damID.text, widget.damPassword.text);
+
+                          // save loginID and password
                           final prefs = await SharedPreferences.getInstance();
                           await prefs.setString("dam_id", widget.damID.text);
                           await prefs.setString("dam_password", widget.damPassword.text);
