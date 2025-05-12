@@ -65,7 +65,6 @@ document.getElementById('LoginButton').click();
 
                   // if current url matches DAM my page url, seem that login succeeded
                   if (url.toString() == DAM_MYPAGE_URL) {
-
                     // get authentication information that exists in DAM web page as javascript variable using javascript
                     cdmToken = await webView?.evaluateJavascript(source: "DamHistoryManager.getCdmToken()");
                     cdmCardNo = await webView?.evaluateJavascript(source: "DamHistoryManager.getCdmCardNo()");

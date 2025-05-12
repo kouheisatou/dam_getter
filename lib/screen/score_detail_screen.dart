@@ -13,7 +13,7 @@ class ScoreDetailScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('スコア詳細'),
+        title: Text(scoreData.contentsName),
       ),
       body: Scrollbar(
         child: ListView(
